@@ -79,5 +79,5 @@ def build_metadata_payload(stats):
         "total_anime": stats["total_anime"],
         "days_watched": str(stats["days_watched"]),
         "mean_score": stats["mean_score"],
-        "favourite_anime": str(stats["favourite_anime"]),
+        "recent_manga": str(stats["recently_read_manga"]),
     }
