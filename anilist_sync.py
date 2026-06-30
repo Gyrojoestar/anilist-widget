@@ -73,14 +73,10 @@ def fetch_anilist_data():
 
 
 def build_metadata_payload(stats):
+    # Discord allows a maximum of 5 metadata fields per application.
     return {
-        "anime_user": str(stats["username"]),
-        "anime_pfp": str(stats["avatar_url"]),
-        "anime_handle": f"@{ANILIST_USERNAME.lower()}",
         "recent_anime": str(stats["recently_watched_anime"]),
-        "recent_manga": str(stats["recently_read_manga"]),
         "total_anime": stats["total_anime"],
-        "total_manga": stats["total_manga"],
         "days_watched": str(stats["days_watched"]),
         "mean_score": stats["mean_score"],
         "favourite_anime": str(stats["favourite_anime"]),
