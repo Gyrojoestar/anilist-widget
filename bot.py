@@ -1,23 +1,38 @@
 import os
 import json
-import asyncio
+import threading
 from pathlib import Path
 
 import discord
 from discord.ext import tasks
+from flask import Flask
 
 from anilist_sync import fetch_anilist_data
 
 BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 CHANNEL_ID = int(os.environ["DISCORD_CHANNEL_ID"])
-POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "600"))  # how often to check AniList
+POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "600"))
 
 STATE_FILE = Path("widget_state.json")
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
+# --- tiny Flask app, only exists so Render treats this as a Web Service ---
+web = Flask(__name__)
 
+
+@web.route("/")
+def health():
+    return "AniList Discord bot is running."
+
+
+def run_web():
+    port = int(os.environ.get("PORT", 5000))
+    web.run(host="0.0.0.0", port=port)
+
+
+# --- bot logic ---
 def load_state():
     if STATE_FILE.exists():
         return json.loads(STATE_FILE.read_text())
@@ -29,10 +44,7 @@ def save_state(state):
 
 
 def build_embed(stats):
-    embed = discord.Embed(
-        title="AniList Stats",
-        color=discord.Color.blue(),
-    )
+    embed = discord.Embed(title="AniList Stats", color=discord.Color.blue())
     embed.set_thumbnail(url=stats["avatar_url"])
     embed.add_field(name="User", value=stats["username"], inline=True)
     embed.add_field(name="Total Anime", value=str(stats["total_anime"]), inline=True)
@@ -59,7 +71,6 @@ async def sync_loop():
     if channel is None:
         channel = await client.fetch_channel(CHANNEL_ID)
 
-    # delete the previous message if it exists
     if state.get("last_message_id"):
         try:
             old_message = await channel.fetch_message(state["last_message_id"])
@@ -85,4 +96,5 @@ async def on_ready():
 
 
 if __name__ == "__main__":
+    threading.Thread(target=run_web, daemon=True).start()
     client.run(BOT_TOKEN)
